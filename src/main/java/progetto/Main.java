@@ -32,14 +32,15 @@ public class Main {
 
         for(File f: folder.listFiles()) {
             if(f.isDirectory()) {
-                // Photos should be in ${CAMERA_FOLDER}/img/
+                // Le foto sono in ${CAMERA_FOLDER}/img/
                 Camera camera = new Camera(f);
                 cameraList.add(camera);
             }
         }
 
         for(Camera camera: cameraList) {
-            ReferencePattern rp = camera.computeReferencePattern(60);
+            // Salvo rp e rn in locale per eventuale confronti tra pattern non della stessa fotocamera
+            ReferencePattern rp = camera.computeReferencePattern();
             List<ResidualNoise> rn = camera.computeResidualNoises();
             List<NoiseTuple> correlationList = camera.compareNoises();
         }

@@ -27,6 +27,10 @@ public class Camera {
         referencePattern = null;
     }
 
+    public ReferencePattern computeReferencePattern() {
+        return computeReferencePattern(60);
+    }
+
     public ReferencePattern computeReferencePattern(int sampleAmount) {
         if(referencePattern != null) {
             System.out.println("Reference Pattern has already been computed! Using the cached one.");
