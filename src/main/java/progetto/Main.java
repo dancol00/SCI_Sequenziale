@@ -1,16 +1,10 @@
 package progetto;
 
-import it.unisa.di.dif.SCIManager;
-import it.unisa.di.dif.pattern.Image;
 import it.unisa.di.dif.pattern.ReferencePattern;
-import it.unisa.di.dif.pattern.ResidualNoise;
 
 import java.io.File;
-import java.io.IOException;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 
 import static java.lang.System.exit;
 
@@ -22,6 +16,7 @@ public class Main {
         }
         System.out.println("Directory containing cameras: " + args[0]);
 
+        long startTime = System.nanoTime();
         File folder = new File(args[0]);
         if(!folder.isDirectory()) {
             System.out.println("Error: not a directory");
@@ -29,21 +24,25 @@ public class Main {
         }
 
         List<Camera> cameraList = new ArrayList<>();
+        List<ReferencePatternTuple> referencePatternsList = new ArrayList<>();
 
         for(File f: folder.listFiles()) {
             if(f.isDirectory()) {
                 // Le foto sono in ${CAMERA_FOLDER}/img/
                 Camera camera = new Camera(f);
                 cameraList.add(camera);
+                System.out.println("Computing reference pattern for camera " + camera.getCameraName());
+                referencePatternsList.add(new ReferencePatternTuple(camera.getCameraName(), camera.computeReferencePattern()));
             }
         }
 
         for(Camera camera: cameraList) {
-            // Salvo rp e rn in locale per eventuale confronti tra pattern non della stessa fotocamera
-            ReferencePattern rp = camera.computeReferencePattern();
-            List<ResidualNoise> rn = camera.computeResidualNoises();
-            List<NoiseTuple> correlationList = camera.compareNoises();
+            List<NoiseTuple> correlationList = camera.computeResidualAndCompare(referencePatternsList);
         }
+
+        long endTime   = System.nanoTime();
+        long totalTime = endTime - startTime;
+        System.out.println("Runtime is " + totalTime/1e9);
 
         exit(0);
     }

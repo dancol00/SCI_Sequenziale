@@ -4,6 +4,8 @@ import it.unisa.di.dif.SCIManager;
 import it.unisa.di.dif.pattern.Image;
 import it.unisa.di.dif.pattern.ReferencePattern;
 import it.unisa.di.dif.pattern.ResidualNoise;
+import lombok.Getter;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -14,17 +16,22 @@ import java.util.Random;
 
 public class Camera {
 
-    List<File> residualNoises_files;
-    List<ResidualNoise> residualNoises;
-    List<Path> referencePatterns_files;
-    ReferencePattern referencePattern;
+    @Getter
+    private String cameraName;
+    @Getter
+    private ReferencePattern referencePattern;
+
+    private List<Path> referencePatterns_files;
+    private List<File> residualNoises_files;
 
     public Camera(File folder) {
+        residualNoises_files = new ArrayList<>();
         for(File photo: folder.listFiles()) {
             residualNoises_files.add(photo);
         }
-        residualNoises = new ArrayList();
+        cameraName = folder.getName();
         referencePattern = null;
+        referencePatterns_files = new ArrayList<>();
     }
 
     public ReferencePattern computeReferencePattern() {
@@ -36,6 +43,8 @@ public class Camera {
             System.out.println("Reference Pattern has already been computed! Using the cached one.");
             return referencePattern;
         }
+
+        System.out.println("Computing Reference Pattern");
 
         for(int i = 0; i < sampleAmount; i++) {
             int randomNumber = new Random().nextInt(residualNoises_files.size());
@@ -53,39 +62,38 @@ public class Camera {
         return referencePattern;
     }
 
-    public List<ResidualNoise> computeResidualNoises() {
-        if(!residualNoises.isEmpty()) {
-            System.out.println("Residual Noises have already been computed! Using the cached ones.");
-            return residualNoises;
-        }
-
-        for(File f: residualNoises_files) {
+    @Deprecated
+    private ResidualNoise computeResidualNoises(@NotNull File f) {
+        ResidualNoise noise;
             try {
+                System.out.println("Computing residual noise of image " + f.getName());
                 Image image = new Image(f);
-                ResidualNoise noise = SCIManager.extractResidualNoise(image);
-                residualNoises.add(noise);
+                noise = SCIManager.extractResidualNoise(image);
             } catch(IOException e) {
                 System.out.println(e);
-                return null;
+                noise = null;
             }
-        }
-        return residualNoises;
+        return noise;
     }
 
-    public List<NoiseTuple> compareNoises() {
+     public List<NoiseTuple> computeResidualAndCompare(List<ReferencePatternTuple> referencePatterns) {
         List<NoiseTuple> compareList = new ArrayList<>();
         int i = 0;
-        for (ResidualNoise rn: residualNoises) {
-            Double compare = SCIManager.compare(referencePattern, rn);
+        for (File f: residualNoises_files) {
             String filename = residualNoises_files.get(i).getName();
-            NoiseTuple<String, Double> tuple = new NoiseTuple<>(filename, compare);
-
-            System.out.println("Correlation value for photo " + filename + " is " + compare +".");
-
-            compareList.add(tuple);
+            ResidualNoise noise = computeResidualNoises(f);
+            for(ReferencePatternTuple rpt: referencePatterns) {
+                ReferencePattern rp = (ReferencePattern) rpt.referencePattern;
+                System.out.println("Starting comparison between image " + filename + " and Reference Pattern " + rpt.cameraName);
+                Double compare = SCIManager.compare(rp, noise);
+                NoiseTuple<String, Double> tuple = new NoiseTuple<>(filename, (String) rpt.cameraName, compare);
+                System.out.println("Correlation value between image " + filename + " and Reference Pattern " + rpt.cameraName + " is " + compare + ".");
+                compareList.add(tuple);
+            }
             i++;
         }
 
         return compareList;
     }
+
 }
