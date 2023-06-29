@@ -25,11 +25,17 @@ public class Camera {
     private List<File> residualNoises_files;
 
     public Camera(File folder) {
+        cameraName = folder.getName();
+
+        File imgFolder = new File(folder.getPath() + "/img/");
+        if(!imgFolder.exists()) {
+            return;
+        }
+
         residualNoises_files = new ArrayList<>();
-        for(File photo: folder.listFiles()) {
+        for(File photo: imgFolder.listFiles()) {
             residualNoises_files.add(photo);
         }
-        cameraName = folder.getName();
         referencePattern = null;
         referencePatterns_files = new ArrayList<>();
     }
