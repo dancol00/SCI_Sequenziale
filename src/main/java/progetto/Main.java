@@ -1,8 +1,9 @@
 package progetto;
 
-import it.unisa.di.dif.pattern.ReferencePattern;
+import lombok.SneakyThrows;
 
 import java.io.File;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -10,6 +11,7 @@ import static java.lang.System.exit;
 
 public class Main {
 
+    @SneakyThrows
     public static void main(String[] args) {
         if(args.length == 0) {
             System.out.println("Aggiungi directory delle fotocamere all'esecuzione");
@@ -36,9 +38,15 @@ public class Main {
             }
         }
 
+        File outputFile = new File(args[0], "output.txt");
+        PrintWriter writer = new PrintWriter(outputFile);
         for(Camera camera: cameraList) {
             List<NoiseTuple> correlationList = camera.computeResidualAndCompare(referencePatternsList);
+            for(NoiseTuple tuple: correlationList) {
+                writer.println(camera.getCameraName() + "\t" + tuple.filename + "\t" + tuple.rpCamera + "\t" + tuple.compareValue);
+            }
         }
+
 
         long endTime   = System.nanoTime();
         long totalTime = endTime - startTime;
